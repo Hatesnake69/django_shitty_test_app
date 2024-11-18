@@ -1,0 +1,44 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block content %}
+{{ block.super }}
+<div id="custom-messages"></div>
+
+<h3>Products with Honest Sign</h3>
+<ul>
+    {% for product in products %}
+        <li>
+            {{ product.name }} ({{ product.quantity }} шт.) - Order ID: {{ product.order.wb_id }}<br>
+            Supply ID: {{ product.order.supply.wb_supply_id }}<br>
+            sgtin <input type="text" id="wb_sgtin_{{ product.id }}" value="{{ product.wb_sgtin }}">
+            <button type="button" onclick="saveProduct({{ product.id }})">Сохранить</button>
+        </li>
+    {% endfor %}
+</ul>
+
+<script>
+function saveProduct(productId) {
+    const value = document.getElementById('wb_sgtin_' + productId).value;
+    fetch('{% url "admin:save_product" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: new URLSearchParams({
+            'product_id': productId,
+            'wb_sgtin': value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const messagesDiv = document.getElementById('custom-messages');
+        const message = document.createElement('div');
+        message.className = data.success ? 'alert alert-success' : 'alert alert-error';
+        message.innerHTML = data.message;
+        messagesDiv.appendChild(message);
+    });
+}
+</script>
+{% endblock %}
